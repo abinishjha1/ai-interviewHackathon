@@ -217,9 +217,9 @@ export default function InterviewPanel() {
         const normalizedSpeech = userSpeech.trim().toLowerCase();
         const normalizedLast = lastUserSpeechRef.current.trim().toLowerCase();
 
-        // Don't respond to the same thing twice (unless greeting)
-        if (!isGreeting && normalizedSpeech === normalizedLast && normalizedSpeech.length > 0) {
-            console.log('Skipping: Duplicate speech detected', normalizedSpeech);
+        // Don't respond to the same thing twice (unless greeting), but allow short confirmations like "Yes"
+        if (!isGreeting && normalizedSpeech === normalizedLast && normalizedSpeech.length > 20) {
+            console.log('Skipping: Long duplicate speech detected', normalizedSpeech);
             return;
         }
 
@@ -286,6 +286,8 @@ export default function InterviewPanel() {
             }
         } catch (error) {
             console.error('Error generating response:', error);
+            // Ensure we don't get stuck in "thinking" state
+            setIsGeneratingResponse(false);
         } finally {
             setIsGeneratingResponse(false);
         }
@@ -320,14 +322,14 @@ export default function InterviewPanel() {
                         clearTimeout(responseTimeoutRef.current);
                     }
 
-                    // Wait 1.5s silence before responding to ensure user is truly done
+                    // Wait 0.8s silence before responding to ensure user is truly done
                     responseTimeoutRef.current = setTimeout(() => {
                         const fullAnswer = currentAnswerRef.current.trim();
                         if (fullAnswer.length > 5) { // Minimum length check
                             console.log('Silence detected. Generating response for full answer:', fullAnswer);
                             generateResponse(fullAnswer);
                         }
-                    }, 1500);
+                    }, 800);
                 }
             }
         }
